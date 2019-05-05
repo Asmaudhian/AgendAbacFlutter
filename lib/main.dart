@@ -49,8 +49,7 @@ class MyHomePage extends StatefulWidget {
 class _MyHomePageState extends State<MyHomePage> {
   int _counter = 0;
   int _selectedIndex = 1;
-
-  final databaseReference = FirebaseDatabase.instance.reference();
+  
   void _incrementCounter() {
     setState(() {
       // This call to setState tells the Flutter framework that something has
@@ -64,8 +63,13 @@ class _MyHomePageState extends State<MyHomePage> {
 
   @override
   Widget build(BuildContext context) {
+    final databaseReference = FirebaseDatabase.instance.reference();
+    var delivery = Object;
+    databaseReference.once().then((DataSnapshot snapshot) {
+      delivery = snapshot.value;
+    });
     final _widgetOptions = [
-      _cardList(context),
+      _cardList(context, delivery),
       Text('COMING SOON'),
       AddDelivery(),
     ];
@@ -148,16 +152,17 @@ class _MyHomePageState extends State<MyHomePage> {
     });
   }
 
-  Widget _deliveryList(context) {
+  Widget _deliveryList(context, delivery) {
     return SliverFixedExtentList(
       itemExtent: 150.0,
       delegate: SliverChildListDelegate(
-        [_cardList(context)],
+        [_cardList(context, delivery)],
       ),
     );
   }
 
-  static Widget _cardList(context) {
+  static Widget _cardList(context, delivery) {
+    // iterate on data to build cards
     return ListView.builder(
       itemCount: 10,
       itemBuilder: (cont, index) {

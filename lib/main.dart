@@ -1,4 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+import 'package:firebase_database/firebase_database.dart';
+// import 'cardlist.dart';
 
 void main() => runApp(MyApp());
 
@@ -45,7 +48,9 @@ class MyHomePage extends StatefulWidget {
 
 class _MyHomePageState extends State<MyHomePage> {
   int _counter = 0;
+  int _selectedIndex = 1;
 
+  final databaseReference = FirebaseDatabase.instance.reference();
   void _incrementCounter() {
     setState(() {
       // This call to setState tells the Flutter framework that something has
@@ -59,6 +64,11 @@ class _MyHomePageState extends State<MyHomePage> {
 
   @override
   Widget build(BuildContext context) {
+    final _widgetOptions = [
+      _cardList(context),
+      Text('COMING SOON'),
+      AddDelivery(),
+    ];
     // This method is rerun every time setState is called, for instance as done
     // by the _incrementCounter method above.
     //
@@ -68,32 +78,41 @@ class _MyHomePageState extends State<MyHomePage> {
 
     return Scaffold(
       backgroundColor: Colors.white,
-      appBar: AppBar(
-        leading: IconButton(
-            onPressed: () {},
-            icon: Icon(
-          IconData(58834,
-              fontFamily: 'MaterialIcons', matchTextDirection: true),
-          color: Colors.white,
-        )),
-        elevation: 0,
-        title: Text('AgendAbac'),
-      ),
+      // appBar: AppBar(
+      //   leading: IconButton(
+      //       onPressed: () {},
+      //       icon: Icon(
+      //     IconData(58834,
+      //         fontFamily: 'MaterialIcons', matchTextDirection: true),
+      //     color: Colors.white,
+      //   )),
+      //   elevation: 0,
+      //   title: Text('AgendAbac'),
+      // ),
       body: Center(
           child: SafeArea(
               child: Container(
                   constraints: BoxConstraints.expand(),
                   // , padding: EdgeInsets.symmetric(horizontal: 16) const EdgeInsets.symmetric(horizontal: 16),
-                  child: _cardList()))),
-      floatingActionButton: FloatingActionButton(
-        onPressed: () => setState(() {
-              _counter++;
-            }),
-        tooltip: 'Increment Counter',
-        child: Icon(Icons.add),
+                  child: _widgetOptions[_selectedIndex]))),
+      bottomNavigationBar: BottomNavigationBar(
+        items: <BottomNavigationBarItem>[
+          BottomNavigationBarItem(
+              icon: Icon(Icons.local_shipping), title: Text('Livraisons')),
+          BottomNavigationBarItem(
+              icon: Icon(Icons.history), title: Text('Historique')),
+          BottomNavigationBarItem(
+              icon: Icon(Icons.add_circle_outline), title: Text('Ajouter')),
+        ],
+        currentIndex: _selectedIndex,
+        fixedColor: Colors.blue,
+        onTap: _onItemTapped,
       ),
-      floatingActionButtonLocation: FloatingActionButtonLocation.endFloat,
     );
+  }
+
+  Widget _addDelivery() {
+    return Container();
   }
 
   Widget _dayTitle() {
@@ -108,7 +127,7 @@ class _MyHomePageState extends State<MyHomePage> {
                   IconData(58848,
                       fontFamily: 'MaterialIcons', matchTextDirection: true),
                   color: Colors.black)),
-          Text('5 avril 2019', style: TextStyle(color: Colors.black)),
+          Text('5 mai 2019', style: TextStyle(color: Colors.black)),
           Padding(
               padding: EdgeInsets.symmetric(horizontal: 50),
               child: Icon(
@@ -123,51 +142,154 @@ class _MyHomePageState extends State<MyHomePage> {
     );
   }
 
-  Widget _deliveryList(elemWidth) {
+  void _onItemTapped(int index) {
+    setState(() {
+      _selectedIndex = index;
+    });
+  }
+
+  Widget _deliveryList(context) {
     return SliverFixedExtentList(
       itemExtent: 150.0,
       delegate: SliverChildListDelegate(
-        [_cardList()],
+        [_cardList(context)],
       ),
     );
   }
 
-  Widget _cardList() {
+  static Widget _cardList(context) {
     return ListView.builder(
       itemCount: 10,
-      itemBuilder: (context, index) {
-        return _card(index);
+      itemBuilder: (cont, index) {
+        return _card(context, index);
       },
     );
   }
 
-  Widget _card(index) {
+  static Widget _card(context, index) {
     return Card(
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: <Widget>[
-          const ListTile(
-            leading: Icon(Icons.album),
-            title: Text('LE GOFF l'),
-            subtitle: Text('16 rue des retaillons'),
-          ),
-          ButtonTheme.bar(
-            // make buttons use the appropriate styles for cards
-            child: ButtonBar(
-              children: <Widget>[
-                FlatButton(
-                  child: const Text('Y ALLER'),
-                  onPressed: () {/* ... */},
+      child: GestureDetector(
+          onTap: () {
+            print('hey');
+            Navigator.push(
+              context,
+              MaterialPageRoute(builder: (context) => DeliveryDetail()),
+            );
+          },
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: <Widget>[
+              const ListTile(
+                leading: Icon(Icons.album),
+                title: Text('LE GOFF Duncan'),
+                subtitle: Text('16 rue des retaillons'),
+              ),
+              ButtonTheme.bar(
+                // make buttons use the appropriate styles for cards
+                child: ButtonBar(
+                  children: <Widget>[
+                    FlatButton(
+                      child: const Text('Y ALLER'),
+                      onPressed: () {/* ... */},
+                    ),
+                    FlatButton(
+                      child: const Text('APPELER'),
+                      onPressed: () {/* ... */},
+                    ),
+                  ],
                 ),
-                FlatButton(
-                  child: const Text('APPELER'),
-                  onPressed: () {/* ... */},
-                ),
-              ],
-            ),
-          ),
-        ],
+              ),
+            ],
+          )),
+    );
+  }
+}
+
+class DeliveryDetail extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: Text("Détails livraison"),
       ),
+      body: Center(),
+    );
+  }
+}
+
+class AddDelivery extends StatelessWidget {
+  final GlobalKey<FormState> _formKey = GlobalKey<FormState>();
+  List<String> _colors = <String>['', 'red', 'green', 'blue', 'orange'];
+  String _color = '';
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: Text('Ajouter une livraison'),
+      ),
+      body: SafeArea(
+          top: false,
+          bottom: false,
+          child: Form(
+              key: _formKey,
+              autovalidate: true,
+              child: ListView(
+                padding: const EdgeInsets.symmetric(horizontal: 16.0),
+                children: <Widget>[
+                  TextFormField(
+                    decoration: const InputDecoration(
+                      icon: const Icon(Icons.person),
+                      hintText: 'Nom du client',
+                      labelText: 'Nom',
+                    ),
+                  ),
+                  TextFormField(
+                    decoration: const InputDecoration(
+                      icon: const Icon(Icons.phone),
+                      hintText: 'Numéro de téléphone du client',
+                      labelText: 'Téléphone',
+                    ),
+                    keyboardType: TextInputType.phone,
+                  ),
+                  TextFormField(
+                    decoration: const InputDecoration(
+                      icon: const Icon(Icons.timelapse),
+                      hintText: 'Durée de la livraison',
+                      labelText: 'Durée',
+                    ),
+                    keyboardType: TextInputType.number,
+                    inputFormatters: [
+                      WhitelistingTextInputFormatter.digitsOnly,
+                    ],
+                  ),
+                  TextFormField(
+                    decoration: const InputDecoration(
+                      icon: const Icon(Icons.calendar_today),
+                      hintText: 'Date de livraison',
+                      labelText: 'Date',
+                    ),
+                    keyboardType: TextInputType.datetime,
+                  ),
+                  TextFormField(
+                    decoration: const InputDecoration(
+                      icon: const Icon(Icons.access_time),
+                      hintText: 'Heure de livraison',
+                      labelText: 'Heure',
+                    ),
+                    keyboardType: TextInputType.datetime,
+                  ),
+                  Container(
+                      padding: const EdgeInsets.only(left: 40.0, top: 20.0),
+                      child: RaisedButton(
+                        color: Colors.blue,
+                        child: const Text('Ajouter livraison', style: TextStyle(color: Colors.white),),
+                        onPressed: () {
+
+                        },
+                      )),
+                ],
+              ))),
     );
   }
 }
